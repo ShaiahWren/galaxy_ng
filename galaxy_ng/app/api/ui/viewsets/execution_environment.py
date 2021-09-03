@@ -212,9 +212,30 @@ class ContainerReadmeViewSet(ContainerContentBaseViewset):
         return self.queryset.get_or_create(container=distro)[0]
 
 
+class ContainerRegistryRemoteFilter(filterset.FilterSet):
+    name = filters.CharFilter(field_name='name')
+    url = filters.CharFilter(field_name='url')
+    name_icontains = filters.CharFilter(field_name='name', lookup_expr='icontains')
+    url_icontains = filters.CharFilter(field_name='url', lookup_expr='icontains')
+
+    sort = filters.OrderingFilter(
+        fields=(
+            ('name', 'name'),
+            ('url', 'url'),
+        ),
+    )
+
+    class Meta:
+        model = models.ContainerRegistryRemote
+        fields = {
+            'name': ['exact', 'icontains', 'contains', 'startswith'],
+            'url': ['exact', 'icontains', 'contains', 'startswith'],
+        }
+
 class ContainerRegistryRemoteViewSet(
     api_base.ModelViewSet,
 ):
     queryset = models.ContainerRegistryRemote.objects.all()
     serializer_class = serializers.ContainerRegistryRemoteSerializer
     permission_classes = []
+    filterset_class = ContainerRegistryRemoteFilter
