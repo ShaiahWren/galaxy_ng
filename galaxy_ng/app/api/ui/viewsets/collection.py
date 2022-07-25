@@ -65,14 +65,10 @@ class CollectionViewSet(
         Containing:
 
             Sign State of the Collection
-                signed: all versions are signed
-                unsigned: all versions are unsigned
+                signed: latest version of a collection is signed
+                unsigned: latest version of a collection unsigned
         """
 
-        # total_versions_query = Subquery(
-        #     base_total_qs.annotate(total=Func(F("pk"), function="count")).values('total')
-        # )
-        total_versions_query = Value(0)
 
         # Ensure it filters only the same namespace
         base_total_qs = base_total_qs.filter(
@@ -80,9 +76,8 @@ class CollectionViewSet(
         )
 
         sign_state_query = Case(
-            When(signed_versions=F("total_versions"), then=Value("signed")),
-            When(unsigned_versions=F("total_versions"), then=Value("unsigned")),
-        )
+           When(base_total_qs.filter(signatures_isnull=False, is_highest=True)), then=Value("signed")), When(base_total_qs.filter(signatures_isnull=True, is_highest=True), then=Value("unsigned"))
+
         sign_state_query = Value("unsigned")
 
         return {
