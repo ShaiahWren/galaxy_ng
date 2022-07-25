@@ -64,57 +64,28 @@ class CollectionViewSet(
 
         Containing:
 
-            Count of Versions of the Collection
-            Count of Signed Versions of the Collection
-            Count of Unsigned Versions of the Collection
             Sign State of the Collection
                 signed: all versions are signed
                 unsigned: all versions are unsigned
-                partial: some versions are signed, some are unsigned
         """
-        # ATTENTION!!!
-        # THIS IS TEMPORARILY DISABLED DUE TO A SLOW IN THE ANNOTATION QUERIES
-        # https://issues.redhat.com/browse/AAH-1775
-
-        # # Ensure it filters only the same namespace
-        # base_total_qs = base_total_qs.filter(
-        #     namespace=OuterRef("namespace"), name=OuterRef("name")
-        # )
 
         # total_versions_query = Subquery(
         #     base_total_qs.annotate(total=Func(F("pk"), function="count")).values('total')
         # )
         total_versions_query = Value(0)
 
-        # signed_versions_query = Subquery(
-        #     base_total_qs.filter(
-        #         signatures__isnull=False,
-        #     ).annotate(
-        #         total=Func(F("pk"), function="count")
-        #     ).values('total')
-        # )
-        signed_versions_query = Value(0)
+        # Ensure it filters only the same namespace
+        base_total_qs = base_total_qs.filter(
+            namespace=OuterRef("namespace"), name=OuterRef("name")
+        )
 
-        # unsigned_versions_query = Subquery(
-        #     base_total_qs.filter(
-        #         signatures__isnull=True,
-        #     ).annotate(
-        #         total=Func(F("pk"), function="count")
-        #     ).values('total')
-        # )
-        unsigned_versions_query = Value(0)
-
-        # sign_state_query = Case(
-        #     When(signed_versions=F("total_versions"), then=Value("signed")),
-        #     When(unsigned_versions=F("total_versions"), then=Value("unsigned")),
-        #     When(signed_versions__lt=F("total_versions"), then=Value("partial")),
-        # )
+        sign_state_query = Case(
+            When(signed_versions=F("total_versions"), then=Value("signed")),
+            When(unsigned_versions=F("total_versions"), then=Value("unsigned")),
+        )
         sign_state_query = Value("unsigned")
 
         return {
-            "total_versions": total_versions_query,
-            "signed_versions": signed_versions_query,
-            "unsigned_versions": unsigned_versions_query,
             "sign_state": sign_state_query,
         }
 
